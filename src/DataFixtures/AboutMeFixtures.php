@@ -12,7 +12,7 @@ class AboutMeFixtures extends Fixture
     {
         $aboutMe = new AboutMe();
         $aboutMe->setKey('name');
-        $aboutMe->setValue('Karol');
+        $aboutMe->setValue('Kuba');
         $manager->persist($aboutMe);
 
         $aboutMe = new AboutMe();
