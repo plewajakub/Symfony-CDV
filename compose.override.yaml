@@ -19,7 +19,8 @@ services:
       # Ensure that host.docker.internal is correctly defined on Linux
       - host.docker.internal:host-gateway
     tty: true
-
+    links:
+      - database
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
 

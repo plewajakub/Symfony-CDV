@@ -2,7 +2,7 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Articles;
+use App\Entity\Application;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
@@ -10,17 +10,14 @@ class AppFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
-        // $product = new Product();
-        $article = new Articles();
-        $article->setTitle('First Article');
-        // $article->setContent('Content 1');
-        $manager->persist($article);
+        $application = new Application();
+        $application->setName('My Application');
+        $application->setDescription('This is my application');
+        $application->setLogo('logo.png');
+        $application->setCreated(new \DateTime());
 
-        $article = new Articles();
-        $article->setTitle('Second Article');
-        // $article->setContent('Content 1');
+        $manager->persist($application);
 
-        $manager->persist($article);
         $manager->flush();
     }
 }

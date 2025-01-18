@@ -21,7 +21,7 @@ services:
     ports:
       # HTTP
       - target: 80
-        published: ${HTTP_PORT:-8081}
+        published: ${HTTP_PORT:-80}
         protocol: tcp
       # HTTPS
       - target: 443
@@ -31,25 +31,36 @@ services:
       - target: 443
         published: ${HTTP3_PORT:-443}
         protocol: udp
+  database:
+      image: postgres
+      restart: always
+      # set shared memory limit when using docker-compose
+      shm_size: 128mb
+      # or set shared memory limit when deploy via swarm stack
+      #volumes:
+      #  - type: tmpfs
+      #    target: /dev/shm
+      #    tmpfs:
+      #      size: 134217728 # 128*2^20 bytes = 128Mb
+      environment:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
   adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
-  database: # <- Service name
-    image: postgres:${POSTGRES_VERSION:-15}
-    restart: always
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-      POSTGRES_DB: ${POSTGRES_DB:-app}
+      image: adminer
+      restart: always
+      ports:
+          - 8080:8080
 
 # Mercure is installed as a Caddy module, prevent the Flex recipe from installing another service
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
-
 volumes:
   caddy_data:
   caddy_config:
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
+
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
