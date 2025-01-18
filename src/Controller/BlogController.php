@@ -19,6 +19,15 @@ class BlogController extends AbstractController
     public function mainPage(): Response
     {
         $articles = $this->articlesRepository->findAll();
-        return new Response(print_r($articles, true));
+        
+        $transformedArticles = [];
+        foreach($articles as $article) {
+            $transformedArticles[] = [
+                'id' => $article->getId(),
+                'title' => $article->getTitle(),
+                'content' => $article->getContent(),
+            ];
+        }
+        return new Response(json_encode($transformedArticles));
     }
 }
