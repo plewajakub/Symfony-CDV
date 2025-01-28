@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/api')]
 class UserController extends AbstractController
@@ -19,7 +20,8 @@ class UserController extends AbstractController
     public function __construct(
         private UserRepository $userRepository,
         private ApiResponseFormatter $apiResponseFormatter,
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private UserPasswordHasherInterface $passwordHasher
     )
     {
     }
@@ -28,7 +30,7 @@ class UserController extends AbstractController
     #[IsGranted('ROLE_SUPER_ADMIN', message: 'You are not allowed to access the admin dashboard.', statusCode: 403, exceptionCode: 10010)]
     public function index(): Response
     {
-        $users = $this->userRepository->findAll();
+        $users = $this->userRepository->findAllUsers();
 
         $transformedUsers = [];
         foreach ($users as $user) {
@@ -43,7 +45,7 @@ class UserController extends AbstractController
     #[Route('/users/{id}', name: 'app_user_show', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
-        $user = $this->userRepository->findOneBy(['id' => $id]);
+        $user = $this->userRepository->findUserById($id);
 
         if (!$user) {
             return $this->apiResponseFormatter
@@ -71,8 +73,9 @@ class UserController extends AbstractController
 
         $user = new User();
         $user->setEmail($data['email']);
-        $user->setPassword($data['password']); // Storing password in plain text (not recommended for production)
-        $user->setRoles($data['roles'] ?? ['ROLE_USER']); // Default role to ROLE_USER if none is provided
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
+        $user->setRoles($data['roles'] ?? ['ROLE_USER']);
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
@@ -86,7 +89,7 @@ class UserController extends AbstractController
     #[Route('/users/{id}', name: 'update_user', methods: ['PATCH'])]
     public function update(int $id, Request $request): JsonResponse
     {
-        $user = $this->userRepository->find($id);
+        $user = $this->userRepository->findUserById($id);
 
         if (!$user) {
             return $this->apiResponseFormatter
@@ -102,7 +105,8 @@ class UserController extends AbstractController
         }
 
         if (isset($data['password'])) {
-            $user->setPassword($data['password']); // Storing password in plain text (not recommended for production)
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+            $user->setPassword($hashedPassword);
         }
 
         if (isset($data['roles'])) {
@@ -120,7 +124,7 @@ class UserController extends AbstractController
     #[Route('/users/{id}', name: 'delete_user', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
-        $user = $this->userRepository->find($id);
+        $user = $this->userRepository->findUserById($id);
 
         if (!$user) {
             return $this->apiResponseFormatter
@@ -133,22 +137,6 @@ class UserController extends AbstractController
 
         return $this->apiResponseFormatter
             ->withMessage('User deleted successfully')
-            ->response();
-    }
-
-    #[Route('/users/superadmins/find', name: 'find_super_admins', methods: ['GET'])]
-    public function findSuperAdmins(): JsonResponse
-    {
-        $superAdmins = $this->userRepository->findAllSuperAdmins();
-
-        $transformedSuperAdmins = [];
-        foreach ($superAdmins as $superAdmin) {
-            $transformedSuperAdmins[] = $superAdmin->toArray();
-        }
-
-        return $this->apiResponseFormatter
-            ->withMessage('Super Admins')
-            ->withData($transformedSuperAdmins)
             ->response();
     }
 

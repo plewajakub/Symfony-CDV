@@ -33,13 +33,6 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->flush();
     }
 
-    public function findAllSuperAdmins()
-    {
-        $sql = 'SELECT * FROM "user" WHERE CAST("roles" AS text) ~ :role';
-        $result = $this->entityManager->getConnection()->executeQuery($sql, ['role' => 'ROLE_SUPER_ADMIN']);
-        return $this->getEntityManager()->getRepository(User::class)->findBy(['id' => array_column($result->fetchAllAssociative(), 'id')]);
-    }
-
     public function findAllByModulo(int $modulo): array
     {
         return $this->createQueryBuilder('u')
@@ -47,5 +40,30 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->setParameter('modulo', $modulo)
             ->getQuery()
             ->getResult();
+    }
+
+    public function findAllUsers(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findUserById(int $id): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findUserByEmail(string $email): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.email = :email')
+            ->setParameter('email', $email)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }
