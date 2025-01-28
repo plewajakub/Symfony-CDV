@@ -48,4 +48,14 @@ class Articles
 
         return $this;
     }
+
+    // Add this method to convert the entity to an array
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'content' => $this->content,
+        ];
+    }
 }
